@@ -1,8 +1,0 @@
-body { margin: 0; font-family: Arial, sans-serif; background: #f4f4f4; }
-header { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-#container { display: flex; }
-#toolbar { width: 300px; background: #fff; padding: 10px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
-#toolbar h2 { margin-top: 20px; }
-#toolbar button, #toolbar select, #toolbar input { width: 100%; margin-bottom: 10px; }
-main { flex: 1; padding: 10px; }
-canvas { border: 1px solid #ccc; }
