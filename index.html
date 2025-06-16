@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generador de Posters</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-b from-blue-900 to-blue-400 min-h-screen text-white font-sans">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6 text-center">🎨 Generador de Posters</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block mb-2 font-semibold">📦 Nombre del Producto</label>
+        <input type="text" id="nombre" class="w-full p-2 rounded text-black" placeholder="Ej. V20 MINI FATBIKE"/>
+
+        <label class="block mt-4 mb-2 font-semibold">📝 Descripción</label>
+        <textarea id="descripcion" rows="4" class="w-full p-2 rounded text-black" placeholder="Motor, batería, autonomía..."></textarea>
+
+        <label class="block mt-4 mb-2 font-semibold">🏷️ Categoría</label>
+        <select id="categoria" class="w-full p-2 rounded text-black">
+          <option>Bicicleta</option>
+          <option>Electrónica</option>
+          <option>Accesorio</option>
+        </select>
+
+        <label class="block mt-4 mb-2 font-semibold">🖼️ Imagen del Producto</label>
+        <input type="file" id="imagen" accept="image/png" class="block"/>
+
+        <button onclick="generarPoster()" class="mt-6 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded w-full">
+          🖨️ Generar Poster
+        </button>
+      </div>
+
+      <div>
+        <div id="preview" class="bg-white text-black rounded p-4 min-h-[500px]">
+          <h2 class="text-xl font-bold" id="previewNombre"></h2>
+          <p id="previewDescripcion" class="mt-2"></p>
+          <p class="mt-2 text-sm text-gray-600" id="previewCategoria"></p>
+          <img id="previewImagen" class="mt-4 max-w-full"/>
+        </div>
+        <a id="downloadLink" class="hidden mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded" download="poster.png">⬇️ Descargar Poster</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
