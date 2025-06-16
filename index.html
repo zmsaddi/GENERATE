@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Poster Editor (Professional)</title>
+  <link href="css/styles.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Poster Editor Pro</h1>
+    <button id="exportBtn">Exportar PNG</button>
+  </header>
+  <div id="container">
+    <aside id="toolbar">
+      <button id="addTextBtn">Añadir Texto</button>
+      <button id="addImageBtn">Añadir Imagen</button>
+      <div id="iconLibrary">
+        <h2>Íconos</h2>
+        <img src="assets/icons/bolt.svg" class="icon" draggable="true">
+        <img src="assets/icons/battery.svg" class="icon" draggable="true">
+        <img src="assets/icons/speed.svg" class="icon" draggable="true">
+      </div>
+      <div id="backgroundOptions">
+        <h2>Fondo</h2>
+        <input type="color" id="bgColorPicker">
+        <input type="file" id="bgImageInput" accept="image/*">
+      </div>
+      <div id="offerToggles">
+        <h2>Ofertas</h2>
+        <label><input type="checkbox" id="toggleOffer"> Oferta Especial</label>
+        <label><input type="checkbox" id="toggleShipping"> Envío Gratis</label>
+        <label><input type="checkbox" id="toggleCOD"> Pago al recibir</label>
+      </div>
+      <div id="fontSelector">
+        <h2>Fuente</h2>
+        <select id="fontFamily">
+          <option value="Roboto">Roboto</option>
+          <option value="Montserrat">Montserrat</option>
+          <option value="Bebas Neue">Bebas Neue</option>
+        </select>
+      </div>
+      <div id="sizeSelector">
+        <h2>Tamaño</h2>
+        <select id="canvasSize">
+          <option value="1080x1350">Vertical 1080x1350</option>
+          <option value="1080x1080">Cuadrado 1080x1080</option>
+        </select>
+      </div>
+    </aside>
+    <main>
+      <canvas id="posterCanvas" width="1080" height="1350"></canvas>
+    </main>
+  </div>
+  <script src="js/fabric-init.js"></script>
+  <script src="js/toolbar.js"></script>
+  <script src="js/canvas-render.js"></script>
+  <script src="js/ui-actions.js"></script>
+</body>
+</html>
