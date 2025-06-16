@@ -1,54 +1,75 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generador de Póster Pro V7</title>
+  <title>Generador de Póster Pro V8</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; }
     #toolbar { width: 300px; background: #fafafa; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; }
-    #toolbar h2 { margin-top: 20px; }
+    #toolbar h2 { margin-top: 20px; font-size: 1.1em; }
     #toolbar label { display: block; margin: 10px 0 5px; }
-    #toolbar input[type="text"], #toolbar textarea, #toolbar select { width:100%; padding:5px; }
+    #toolbar input[type="text"], #toolbar textarea, #toolbar select, #toolbar input[type="color"], #toolbar input[type="range"] {
+      width:100%; padding:5px; font-size: 0.9em;
+    }
     #toolbar input[type="file"] { padding:5px; }
     #toolbar .icon { width:32px; cursor:move; margin:5px; }
     #canvas-container { flex:1; display:flex; align-items:center; justify-content:center; background:#eaeaea; }
     canvas { border:1px solid #ccc; }
-    button { margin-top:10px; padding:10px; width:100%; }
+    button { margin-top:10px; padding:10px; width:100%; font-size: 1em; }
   </style>
 </head>
 <body>
   <div id="toolbar">
-    <h1>Poster Pro V7</h1>
+    <h1>Poster Pro V8</h1>
     <h2>Títulos</h2>
     <label>Main Title</label><input type="text" id="mainTitle" value="V20">
     <label>Subtitle</label><input type="text" id="subTitle" value="PRO">
     <label>Third Title</label><input type="text" id="thirdTitle" value="FATBIKE">
-    <h2>Frase</h2>
+
+    <h2>Frase destacada</h2>
     <textarea id="featureLine">¡Potente, robusta y lista para cualquier terreno!</textarea>
+
     <h2>Especificaciones</h2>
     <div id="specsContainer"></div>
     <button id="addSpec">+ Añadir especificación</button>
+
     <h2>Ofertas</h2>
-    <label><input type="checkbox" id="offerSpecial"> Oferta Especial</label>
-    <label><input type="checkbox" id="offerShipping"> Envío Gratis</label>
-    <label><input type="checkbox" id="offerCOD"> Pago contra reembolso</label>
+    <label><input type="checkbox" id="offerSpecial" checked> Oferta Especial</label>
+    <label><input type="checkbox" id="offerShipping" checked> Envío Gratis</label>
+    <label><input type="checkbox" id="offerCOD" checked> Pago contra reembolso</label>
+
     <h2>WhatsApp</h2>
     <label>Número</label><input type="text" id="whatsapp" value="+34 632 759 513">
-    <h2>Colores Fondo</h2>
-    <label>Color 1</label><input type="color" id="bgColor1" value="#001c40">
-    <label>Color 2</label><input type="color" id="bgColor2" value="#007BFF">
+
+    <h2>Fondo Interactivo</h2>
+    <label>Color inicial</label><input type="color" id="bgColor1" value="#001c40">
+    <label>Color final</label><input type="color" id="bgColor2" value="#007BFF">
+    <label>Ángulo del degradado (0°-360°)</label><input type="range" id="bgAngle" min="0" max="360" value="90">
+    <button id="resetGradient">Resetear Gradient</button>
+
     <h2>Imagen Fondo</h2>
     <input type="file" id="bgImageInput" accept="image/*">
+
     <h2>Imagen Producto</h2>
     <input type="file" id="prodImageInput" accept="image/*">
+
     <h2>Iconos</h2>
     <div id="iconLibrary">
       <img src="assets/icons/bolt.svg" class="icon" draggable="true">
       <img src="assets/icons/battery.svg" class="icon" draggable="true">
       <img src="assets/icons/speed.svg" class="icon" draggable="true">
     </div>
+
+    <h2>Tamaño del póster</h2>
+    <select id="canvasSize">
+      <option value="1080x1350">Vertical 1080×1350</option>
+      <option value="1080x1080">Cuadrado 1080×1080</option>
+      <option value="720x1280">Vertical 720×1280</option>
+      <option value="1920x1080">Horizontal 1920×1080</option>
+    </select>
+
+    <button id="deleteBtn">🗑️ Eliminar elemento seleccionado</button>
     <button id="exportBtn">Exportar PNG</button>
   </div>
   <div id="canvas-container">
@@ -56,87 +77,169 @@
   </div>
   <script>
     const canvas = new fabric.Canvas('canvas', { preserveObjectStacking: true });
-    // Background rectangle
-    let bgRect = new fabric.Rect({ left:0, top:0, width:1080, height:1350, selectable:false });
-    function updateBackground() {
+    canvas.selection = true;
+
+    // Background gradient rectangle
+    const bgRect = new fabric.Rect({ left:0, top:0, width:canvas.width, height:canvas.height, selectable:false });
+    canvas.add(bgRect);
+
+    function updateGradient() {
       const c1 = document.getElementById('bgColor1').value;
       const c2 = document.getElementById('bgColor2').value;
-      bgRect.set('fill', new fabric.Gradient({
+      const angleDeg = document.getElementById('bgAngle').value;
+      const angle = angleDeg * (Math.PI/180);
+      const x1 = 0.5 - 0.5*Math.cos(angle);
+      const y1 = 0.5 - 0.5*Math.sin(angle);
+      const x2 = 0.5 + 0.5*Math.cos(angle);
+      const y2 = 0.5 + 0.5*Math.sin(angle);
+      const gradient = new fabric.Gradient({
         type: 'linear',
-        coords: { x1:0, y1:0, x2:0, y2:1350 },
-        colorStops: [{ offset:0, color:c1 },{ offset:1, color:c2 }]
-      }));
+        coords: {
+          x1: canvas.width * x1,
+          y1: canvas.height * y1,
+          x2: canvas.width * x2,
+          y2: canvas.height * y2
+        },
+        colorStops: [
+          { offset: 0, color: c1 },
+          { offset: 1, color: c2 }
+        ]
+      });
+      bgRect.set('fill', gradient);
       canvas.sendToBack(bgRect);
       canvas.renderAll();
     }
-    canvas.add(bgRect);
-    updateBackground();
-    // Title objects
-    let titleMain = new fabric.Text('V20', { left:50, top:50, fontSize:72, fill:'#cce6ff', shadow:'0 0 10px #00f0ff' });
-    let titleSub = new fabric.Text('PRO', { left:200, top:70, fontSize:48, fill:'#cce6ff' });
-    let titleThird = new fabric.Text('FATBIKE', { left:50, top:120, fontSize:54, fill:'#cce6ff' });
+    document.getElementById('bgColor1').onchange = updateGradient;
+    document.getElementById('bgColor2').onchange = updateGradient;
+    document.getElementById('bgAngle').oninput = updateGradient;
+    document.getElementById('resetGradient').onclick = () => {
+      document.getElementById('bgAngle').value = 90;
+      document.getElementById('bgColor1').value = '#001c40';
+      document.getElementById('bgColor2').value = '#007BFF';
+      updateGradient();
+    };
+    updateGradient();
+
+    // Titles
+    const titleMain = new fabric.Textbox('V20', { left:50, top:50, width:500, fontSize:72, fill:'#cce6ff', fontFamily:'Montserrat', shadow:new fabric.Shadow({ color:'#00f0ff', blur:15 }) });
+    const titleSub = new fabric.Textbox('PRO', { left:200, top:130, width:300, fontSize:48, fill:'#cce6ff', fontFamily:'Montserrat' });
+    const titleThird = new fabric.Textbox('FATBIKE', { left:50, top:190, width:400, fontSize:54, fill:'#cce6ff', fontFamily:'Montserrat' });
     canvas.add(titleMain, titleSub, titleThird);
+
+    document.getElementById('mainTitle').oninput = e => { titleMain.text = e.target.value; canvas.renderAll(); };
+    document.getElementById('subTitle').oninput = e => { titleSub.text = e.target.value; canvas.renderAll(); };
+    document.getElementById('thirdTitle').oninput = e => { titleThird.text = e.target.value; canvas.renderAll(); };
+
     // Feature line
-    let featureText = new fabric.Text('¡Potente, robusta y lista para cualquier terreno!', { left:50, top:180, fontSize:28, fill:'white' });
+    const featureText = new fabric.Textbox(document.getElementById('featureLine').value, { left:50, top:260, width:600, fontSize:28, fill:'white', fontFamily:'Roboto' });
     canvas.add(featureText);
-    // Specs group
-    let specs = [];
-    function addSpecField(text='Nuevo especificación') {
-      const y = 230 + specs.length*40;
-      let tb = new fabric.Textbox('⚡ ' + text, { left:50, top:y, width:400, fontSize:24, fill:'white' });
-      specs.push(tb); canvas.add(tb);
+    document.getElementById('featureLine').oninput = e => { featureText.text = e.target.value; canvas.renderAll(); };
+
+    // Specs
+    const specs = [];
+    function addSpec(text='Nueva especificación') {
+      const y = 330 + specs.length * 40;
+      const tb = new fabric.Textbox('⚡ ' + text, { left:50, top:y, width:500, fontSize:24, fill:'white', fontFamily:'Roboto' });
+      specs.push(tb);
+      canvas.add(tb);
+      canvas.renderAll();
     }
-    document.getElementById('addSpec').onclick = () => { addSpecField(); canvas.renderAll(); };
-    addSpecField('Motor 250W'); addSpecField('Batería 36V');
-    // Offers
-    let offerSpecialObj = new fabric.Textbox('OFERTA ESPECIAL', { left:50, top:400, width:300, fontSize:28, fill:'white', backgroundColor:'red' });
-    let offerShippingObj = new fabric.Textbox('ENVÍO GRATIS', { left:50, top:460, width:300, fontSize:28, fill:'black', backgroundColor:'gold' });
-    let offerCODObj = new fabric.Textbox('Pago contra reembolso', { left:50, top:520, width:300, fontSize:28, fill:'black', backgroundColor:'orange' });
-    canvas.add(offerSpecialObj, offerShippingObj, offerCODObj);
+    document.getElementById('addSpec').onclick = () => addSpec();
+    addSpec('Motor 250W');
+    addSpec('Batería 36V');
+
+    // Offers with rounded corners
+    function createOffer(text, color, top) {
+      const rect = new fabric.Rect({ width:300, height:50, fill: color, rx: 15, ry: 15 });
+      const txt = new fabric.Text(text, { fontSize:24, fill:'white', fontFamily:'Roboto' });
+      const grp = new fabric.Group([rect, txt], { left:50, top:top });
+      canvas.add(grp);
+      return grp;
+    }
+    const offerGroups = {
+      offerSpecial: createOffer('OFERTA ESPECIAL', 'red', 600),
+      offerShipping: createOffer('ENVÍO GRATIS', 'gold', 660),
+      offerCOD: createOffer('Pago contra reembolso', 'orange', 720)
+    };
+    ['offerSpecial', 'offerShipping', 'offerCOD'].forEach(id => {
+      document.getElementById(id).onchange = e => {
+        offerGroups[id].visible = e.target.checked;
+        canvas.renderAll();
+      };
+    });
+
     // WhatsApp
-    let whatsappObj = new fabric.Textbox('📱 +34 632 759 513', { left:50, top:580, width:400, fontSize:24, fill:'white', backgroundColor:'#25D366' });
-    canvas.add(whatsappObj);
-    // Update functions
-    document.getElementById('mainTitle').oninput = e => { titleMain.set('text', e.target.value); canvas.renderAll(); };
-    document.getElementById('subTitle').oninput = e => { titleSub.set('text', e.target.value); canvas.renderAll(); };
-    document.getElementById('thirdTitle').oninput = e => { titleThird.set('text', e.target.value); canvas.renderAll(); };
-    document.getElementById('featureLine').oninput = e => { featureText.set('text', e.target.value); canvas.renderAll(); };
-    document.getElementById('whatsapp').oninput = e => { whatsappObj.set('text', '📱 ' + e.target.value); canvas.renderAll(); };
-    document.getElementById('offerSpecial').onchange = e => { offerSpecialObj.visible = e.target.checked; canvas.renderAll(); };
-    document.getElementById('offerShipping').onchange = e => { offerShippingObj.visible = e.target.checked; canvas.renderAll(); };
-    document.getElementById('offerCOD').onchange = e => { offerCODObj.visible = e.target.checked; canvas.renderAll(); };
-    document.getElementById('bgColor1').onchange = updateBackground;
-    document.getElementById('bgColor2').onchange = updateBackground;
-    // Background image
+    const whatsappBox = new fabric.Textbox('📱 ' + document.getElementById('whatsapp').value, {
+      left:50, top:780, width:500, fontSize:24, fill:'black', backgroundColor:'white', fontFamily:'Roboto', padding:5
+    });
+    canvas.add(whatsappBox);
+    document.getElementById('whatsapp').oninput = e => {
+      whatsappBox.text = '📱 ' + e.target.value;
+      canvas.renderAll();
+    };
+
+    // Delete element
+    document.getElementById('deleteBtn').onclick = () => {
+      const active = canvas.getActiveObject();
+      if (active) {
+        canvas.remove(active);
+        canvas.discardActiveObject();
+        canvas.renderAll();
+      }
+    };
+
+    // Canvas size change
+    document.getElementById('canvasSize').onchange = e => {
+      const [w, h] = e.target.value.split('x').map(Number);
+      canvas.setWidth(w).setHeight(h);
+      bgRect.set({ width: w, height: h });
+      if (canvas.backgroundImage) {
+        canvas.backgroundImage.set({ width: w, height: h });
+      }
+      updateGradient();
+      canvas.renderAll();
+    };
+
+    // Background image upload
     document.getElementById('bgImageInput').onchange = e => {
-      const reader = new FileReader(); reader.onload = evt => {
+      const reader = new FileReader();
+      reader.onload = evt => {
         fabric.Image.fromURL(evt.target.result, img => {
-          img.set({ left:0, top:0, width:1080, height:1350, selectable:false });
+          img.set({ left:0, top:0, width: canvas.width, height: canvas.height, selectable:false });
           canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
         });
-      }; reader.readAsDataURL(e.target.files[0]);
+      };
+      reader.readAsDataURL(e.target.files[0]);
     };
-    // Product image
+
+    // Product image upload
     document.getElementById('prodImageInput').onchange = e => {
-      const reader = new FileReader(); reader.onload = evt => {
+      const reader = new FileReader();
+      reader.onload = evt => {
         fabric.Image.fromURL(evt.target.result, img => {
           img.set({ left:600, top:300, scaleX:0.5, scaleY:0.5 });
-          canvas.add(img).setActiveObject(img);
+          canvas.add(img);
+          canvas.sendBackwards(img);
+          canvas.renderAll();
         });
-      }; reader.readAsDataURL(e.target.files[0]);
+      };
+      reader.readAsDataURL(e.target.files[0]);
     };
-    // Icon drag/drop
+
+    // Icon drag & drop
     document.querySelectorAll('.icon').forEach(icon => {
       icon.ondragstart = e => e.dataTransfer.setData('text/plain', icon.src);
     });
     canvas.on('drop', e => {
       const src = e.e.dataTransfer.getData('text/plain');
       fabric.Image.fromURL(src, img => {
-        img.set({ left:e.pointer.x, top:e.pointer.y, scaleX:0.3, scaleY:0.3 });
-        canvas.add(img).setActiveObject(img);
+        img.set({ left: e.pointer.x, top: e.pointer.y, scaleX:0.3, scaleY:0.3 });
+        canvas.add(img);
+        canvas.renderAll();
       });
     });
-    // Export
+
+    // Export poster
     document.getElementById('exportBtn').onclick = () => {
       const link = document.createElement('a');
       link.download = 'poster.png';
