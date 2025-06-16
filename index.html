@@ -1,60 +1,148 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Canvas Poster Editor (Professional)</title>
-  <link href="css/styles.css" rel="stylesheet">
+  <title>Generador de Póster Pro V7</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; height: 100vh; }
+    #toolbar { width: 300px; background: #fafafa; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; }
+    #toolbar h2 { margin-top: 20px; }
+    #toolbar label { display: block; margin: 10px 0 5px; }
+    #toolbar input[type="text"], #toolbar textarea, #toolbar select { width:100%; padding:5px; }
+    #toolbar input[type="file"] { padding:5px; }
+    #toolbar .icon { width:32px; cursor:move; margin:5px; }
+    #canvas-container { flex:1; display:flex; align-items:center; justify-content:center; background:#eaeaea; }
+    canvas { border:1px solid #ccc; }
+    button { margin-top:10px; padding:10px; width:100%; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Poster Editor Pro</h1>
+  <div id="toolbar">
+    <h1>Poster Pro V7</h1>
+    <h2>Títulos</h2>
+    <label>Main Title</label><input type="text" id="mainTitle" value="V20">
+    <label>Subtitle</label><input type="text" id="subTitle" value="PRO">
+    <label>Third Title</label><input type="text" id="thirdTitle" value="FATBIKE">
+    <h2>Frase</h2>
+    <textarea id="featureLine">¡Potente, robusta y lista para cualquier terreno!</textarea>
+    <h2>Especificaciones</h2>
+    <div id="specsContainer"></div>
+    <button id="addSpec">+ Añadir especificación</button>
+    <h2>Ofertas</h2>
+    <label><input type="checkbox" id="offerSpecial"> Oferta Especial</label>
+    <label><input type="checkbox" id="offerShipping"> Envío Gratis</label>
+    <label><input type="checkbox" id="offerCOD"> Pago contra reembolso</label>
+    <h2>WhatsApp</h2>
+    <label>Número</label><input type="text" id="whatsapp" value="+34 632 759 513">
+    <h2>Colores Fondo</h2>
+    <label>Color 1</label><input type="color" id="bgColor1" value="#001c40">
+    <label>Color 2</label><input type="color" id="bgColor2" value="#007BFF">
+    <h2>Imagen Fondo</h2>
+    <input type="file" id="bgImageInput" accept="image/*">
+    <h2>Imagen Producto</h2>
+    <input type="file" id="prodImageInput" accept="image/*">
+    <h2>Iconos</h2>
+    <div id="iconLibrary">
+      <img src="assets/icons/bolt.svg" class="icon" draggable="true">
+      <img src="assets/icons/battery.svg" class="icon" draggable="true">
+      <img src="assets/icons/speed.svg" class="icon" draggable="true">
+    </div>
     <button id="exportBtn">Exportar PNG</button>
-  </header>
-  <div id="container">
-    <aside id="toolbar">
-      <button id="addTextBtn">Añadir Texto</button>
-      <button id="addImageBtn">Añadir Imagen</button>
-      <div id="iconLibrary">
-        <h2>Íconos</h2>
-        <img src="assets/icons/bolt.svg" class="icon" draggable="true">
-        <img src="assets/icons/battery.svg" class="icon" draggable="true">
-        <img src="assets/icons/speed.svg" class="icon" draggable="true">
-      </div>
-      <div id="backgroundOptions">
-        <h2>Fondo</h2>
-        <input type="color" id="bgColorPicker">
-        <input type="file" id="bgImageInput" accept="image/*">
-      </div>
-      <div id="offerToggles">
-        <h2>Ofertas</h2>
-        <label><input type="checkbox" id="toggleOffer"> Oferta Especial</label>
-        <label><input type="checkbox" id="toggleShipping"> Envío Gratis</label>
-        <label><input type="checkbox" id="toggleCOD"> Pago al recibir</label>
-      </div>
-      <div id="fontSelector">
-        <h2>Fuente</h2>
-        <select id="fontFamily">
-          <option value="Roboto">Roboto</option>
-          <option value="Montserrat">Montserrat</option>
-          <option value="Bebas Neue">Bebas Neue</option>
-        </select>
-      </div>
-      <div id="sizeSelector">
-        <h2>Tamaño</h2>
-        <select id="canvasSize">
-          <option value="1080x1350">Vertical 1080x1350</option>
-          <option value="1080x1080">Cuadrado 1080x1080</option>
-        </select>
-      </div>
-    </aside>
-    <main>
-      <canvas id="posterCanvas" width="1080" height="1350"></canvas>
-    </main>
   </div>
-  <script src="js/fabric-init.js"></script>
-  <script src="js/toolbar.js"></script>
-  <script src="js/canvas-render.js"></script>
-  <script src="js/ui-actions.js"></script>
+  <div id="canvas-container">
+    <canvas id="canvas" width="1080" height="1350"></canvas>
+  </div>
+  <script>
+    const canvas = new fabric.Canvas('canvas', { preserveObjectStacking: true });
+    // Background rectangle
+    let bgRect = new fabric.Rect({ left:0, top:0, width:1080, height:1350, selectable:false });
+    function updateBackground() {
+      const c1 = document.getElementById('bgColor1').value;
+      const c2 = document.getElementById('bgColor2').value;
+      bgRect.set('fill', new fabric.Gradient({
+        type: 'linear',
+        coords: { x1:0, y1:0, x2:0, y2:1350 },
+        colorStops: [{ offset:0, color:c1 },{ offset:1, color:c2 }]
+      }));
+      canvas.sendToBack(bgRect);
+      canvas.renderAll();
+    }
+    canvas.add(bgRect);
+    updateBackground();
+    // Title objects
+    let titleMain = new fabric.Text('V20', { left:50, top:50, fontSize:72, fill:'#cce6ff', shadow:'0 0 10px #00f0ff' });
+    let titleSub = new fabric.Text('PRO', { left:200, top:70, fontSize:48, fill:'#cce6ff' });
+    let titleThird = new fabric.Text('FATBIKE', { left:50, top:120, fontSize:54, fill:'#cce6ff' });
+    canvas.add(titleMain, titleSub, titleThird);
+    // Feature line
+    let featureText = new fabric.Text('¡Potente, robusta y lista para cualquier terreno!', { left:50, top:180, fontSize:28, fill:'white' });
+    canvas.add(featureText);
+    // Specs group
+    let specs = [];
+    function addSpecField(text='Nuevo especificación') {
+      const y = 230 + specs.length*40;
+      let tb = new fabric.Textbox('⚡ ' + text, { left:50, top:y, width:400, fontSize:24, fill:'white' });
+      specs.push(tb); canvas.add(tb);
+    }
+    document.getElementById('addSpec').onclick = () => { addSpecField(); canvas.renderAll(); };
+    addSpecField('Motor 250W'); addSpecField('Batería 36V');
+    // Offers
+    let offerSpecialObj = new fabric.Textbox('OFERTA ESPECIAL', { left:50, top:400, width:300, fontSize:28, fill:'white', backgroundColor:'red' });
+    let offerShippingObj = new fabric.Textbox('ENVÍO GRATIS', { left:50, top:460, width:300, fontSize:28, fill:'black', backgroundColor:'gold' });
+    let offerCODObj = new fabric.Textbox('Pago contra reembolso', { left:50, top:520, width:300, fontSize:28, fill:'black', backgroundColor:'orange' });
+    canvas.add(offerSpecialObj, offerShippingObj, offerCODObj);
+    // WhatsApp
+    let whatsappObj = new fabric.Textbox('📱 +34 632 759 513', { left:50, top:580, width:400, fontSize:24, fill:'white', backgroundColor:'#25D366' });
+    canvas.add(whatsappObj);
+    // Update functions
+    document.getElementById('mainTitle').oninput = e => { titleMain.set('text', e.target.value); canvas.renderAll(); };
+    document.getElementById('subTitle').oninput = e => { titleSub.set('text', e.target.value); canvas.renderAll(); };
+    document.getElementById('thirdTitle').oninput = e => { titleThird.set('text', e.target.value); canvas.renderAll(); };
+    document.getElementById('featureLine').oninput = e => { featureText.set('text', e.target.value); canvas.renderAll(); };
+    document.getElementById('whatsapp').oninput = e => { whatsappObj.set('text', '📱 ' + e.target.value); canvas.renderAll(); };
+    document.getElementById('offerSpecial').onchange = e => { offerSpecialObj.visible = e.target.checked; canvas.renderAll(); };
+    document.getElementById('offerShipping').onchange = e => { offerShippingObj.visible = e.target.checked; canvas.renderAll(); };
+    document.getElementById('offerCOD').onchange = e => { offerCODObj.visible = e.target.checked; canvas.renderAll(); };
+    document.getElementById('bgColor1').onchange = updateBackground;
+    document.getElementById('bgColor2').onchange = updateBackground;
+    // Background image
+    document.getElementById('bgImageInput').onchange = e => {
+      const reader = new FileReader(); reader.onload = evt => {
+        fabric.Image.fromURL(evt.target.result, img => {
+          img.set({ left:0, top:0, width:1080, height:1350, selectable:false });
+          canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+        });
+      }; reader.readAsDataURL(e.target.files[0]);
+    };
+    // Product image
+    document.getElementById('prodImageInput').onchange = e => {
+      const reader = new FileReader(); reader.onload = evt => {
+        fabric.Image.fromURL(evt.target.result, img => {
+          img.set({ left:600, top:300, scaleX:0.5, scaleY:0.5 });
+          canvas.add(img).setActiveObject(img);
+        });
+      }; reader.readAsDataURL(e.target.files[0]);
+    };
+    // Icon drag/drop
+    document.querySelectorAll('.icon').forEach(icon => {
+      icon.ondragstart = e => e.dataTransfer.setData('text/plain', icon.src);
+    });
+    canvas.on('drop', e => {
+      const src = e.e.dataTransfer.getData('text/plain');
+      fabric.Image.fromURL(src, img => {
+        img.set({ left:e.pointer.x, top:e.pointer.y, scaleX:0.3, scaleY:0.3 });
+        canvas.add(img).setActiveObject(img);
+      });
+    });
+    // Export
+    document.getElementById('exportBtn').onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'poster.png';
+      link.href = canvas.toDataURL({ format:'png', quality:1 });
+      link.click();
+    };
+  </script>
 </body>
 </html>
