@@ -1,102 +1,60 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Generador de Póster</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Canvas Poster Editor (Professional)</title>
+  <link href="css/styles.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
-  <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6">
-    <h1 class="text-3xl font-bold text-center mb-6">🎨 Generador de Póster Publicitario</h1>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Formulario -->
-      <div>
-        <label class="block mb-2 font-semibold">🛴 Nombre del producto</label>
-        <input id="productName" type="text" class="w-full border rounded px-3 py-2" placeholder="Ej: V20 MINI FATBIKE"/>
-
-        <label class="block mt-4 mb-2 font-semibold">📂 Categoría</label>
-        <input id="category" type="text" class="w-full border rounded px-3 py-2" placeholder="Ej: Bicicleta eléctrica" />
-
-        <label class="block mt-4 mb-2 font-semibold">📋 Descripción (línea por línea)</label>
-        <textarea id="description" rows="6" class="w-full border rounded px-3 py-2" placeholder="Motor: 250W
-Batería: 36V
-Autonomía: 35-45 km"></textarea>
-
-        <label class="block mt-4 mb-2 font-semibold">🔣 Emoji por línea (orden correspondiente)</label>
-        <textarea id="icons" rows="6" class="w-full border rounded px-3 py-2" placeholder="⚡
-🔋
-📏"></textarea>
-
-        <label class="block mt-4 mb-2 font-semibold">🖼️ Imagen del producto (PNG)</label>
-        <input id="productImage" type="file" accept="image/png" class="w-full"/>
+<body>
+  <header>
+    <h1>Poster Editor Pro</h1>
+    <button id="exportBtn">Exportar PNG</button>
+  </header>
+  <div id="container">
+    <aside id="toolbar">
+      <button id="addTextBtn">Añadir Texto</button>
+      <button id="addImageBtn">Añadir Imagen</button>
+      <div id="iconLibrary">
+        <h2>Íconos</h2>
+        <img src="assets/icons/bolt.svg" class="icon" draggable="true">
+        <img src="assets/icons/battery.svg" class="icon" draggable="true">
+        <img src="assets/icons/speed.svg" class="icon" draggable="true">
       </div>
-
-      <!-- Vista previa -->
-      <div>
-        <div id="posterPreview" class="relative w-full h-[640px] bg-gradient-to-b from-blue-900 to-blue-400 rounded-xl text-white p-6 overflow-hidden">
-          <h2 id="posterTitle" class="text-3xl font-extrabold text-gray-100 mb-2">Nombre del Producto</h2>
-          <p id="posterCategory" class="italic text-sm mb-4 text-gray-300">Categoría</p>
-          <ul id="posterSpecs" class="text-sm space-y-1 leading-snug whitespace-pre-line"></ul>
-          <img id="previewImage" class="absolute bottom-4 right-4 w-48 h-auto hidden"/>
-        </div>
-        <button onclick="generatePoster()" class="mt-6 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">⬇️ Descargar Póster PNG</button>
+      <div id="backgroundOptions">
+        <h2>Fondo</h2>
+        <input type="color" id="bgColorPicker">
+        <input type="file" id="bgImageInput" accept="image/*">
       </div>
-    </div>
+      <div id="offerToggles">
+        <h2>Ofertas</h2>
+        <label><input type="checkbox" id="toggleOffer"> Oferta Especial</label>
+        <label><input type="checkbox" id="toggleShipping"> Envío Gratis</label>
+        <label><input type="checkbox" id="toggleCOD"> Pago al recibir</label>
+      </div>
+      <div id="fontSelector">
+        <h2>Fuente</h2>
+        <select id="fontFamily">
+          <option value="Roboto">Roboto</option>
+          <option value="Montserrat">Montserrat</option>
+          <option value="Bebas Neue">Bebas Neue</option>
+        </select>
+      </div>
+      <div id="sizeSelector">
+        <h2>Tamaño</h2>
+        <select id="canvasSize">
+          <option value="1080x1350">Vertical 1080x1350</option>
+          <option value="1080x1080">Cuadrado 1080x1080</option>
+        </select>
+      </div>
+    </aside>
+    <main>
+      <canvas id="posterCanvas" width="1080" height="1350"></canvas>
+    </main>
   </div>
-
-  <script>
-    const nameInput = document.getElementById('productName');
-    const catInput = document.getElementById('category');
-    const descInput = document.getElementById('description');
-    const iconsInput = document.getElementById('icons');
-    const imgInput = document.getElementById('productImage');
-
-    nameInput.addEventListener('input', () => {
-      document.getElementById('posterTitle').innerText = nameInput.value;
-    });
-
-    catInput.addEventListener('input', () => {
-      document.getElementById('posterCategory').innerText = catInput.value;
-    });
-
-    function updateSpecs() {
-      const descLines = descInput.value.split("\n");
-      const iconLines = iconsInput.value.split("\n");
-      const specList = document.getElementById('posterSpecs');
-      specList.innerHTML = "";
-      descLines.forEach((line, index) => {
-        const emoji = iconLines[index] || "•";
-        const item = document.createElement("li");
-        item.innerText = `${emoji} ${line}`;
-        specList.appendChild(item);
-      });
-    }
-
-    descInput.addEventListener('input', updateSpecs);
-    iconsInput.addEventListener('input', updateSpecs);
-
-    imgInput.addEventListener('change', (e) => {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const img = document.getElementById('previewImage');
-        img.src = event.target.result;
-        img.classList.remove('hidden');
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    });
-
-    function generatePoster() {
-      html2canvas(document.getElementById("posterPreview")).then(canvas => {
-        const link = document.createElement("a");
-        link.download = "poster.png";
-        link.href = canvas.toDataURL();
-        link.click();
-      });
-    }
-  </script>
+  <script src="js/fabric-init.js"></script>
+  <script src="js/toolbar.js"></script>
+  <script src="js/canvas-render.js"></script>
+  <script src="js/ui-actions.js"></script>
 </body>
 </html>
